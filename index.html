@@ -504,8 +504,29 @@ function sendReminder(index){
   const s=students[index];
   if(!s) return;
   if(!s.mobile){alert("Student ka mobile number save nahi hai.");return;}
-  const msg = `फीस रिमाइंडर\n\nनमस्ते ${s.name},\nआपकी UDAY LIBRARY की फीस बकाया है।\nकुल बकाया: ₹${Number(s.monthly||0).toLocaleString("en-IN")}\nसीट नंबर: ${s.seat}\nकृपया बकाया फीस जल्द जमा करें।\nधन्यवाद।\n\nउदय लाइब्रेरी`;
-  window.open("https://wa.me/91"+s.mobile+"?text="+encodeURIComponent(msg),"_blank");
+  function getDueMonths(s){
+  const nextDueStr = s.validityDate || "";
+  if(!nextDueStr) return 1;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const nextDue = new Date(nextDueStr + "T00:00:00");
+  if(nextDue > today) return 0;
+  let months = (today.getFullYear() - nextDue.getFullYear()) * 12 + (today.getMonth() - nextDue.getMonth());
+  if(today.getDate() >= nextDue.getDate()) months += 1;
+  return Math.max(1, months);
+}
+
+function sendReminder(index){
+  const s = students[index];
+  if(!s) return;
+  if(!s.mobile){ alert("Student ka mobile number save nahi hai."); return; }
+
+  const monthly = Number(s.monthly) || 0;
+  const monthsDue = Math.max(1, getDueMonths(s));
+  const totalDue = monthly * monthsDue;
+
+  const msg = `फीस रिमाइंडर\n\nनमस्ते ${s.name},\nआपकी UDAY LIBRARY की फीस बकाया है।\nकुल बकाया: ₹${totalDue.toLocaleString("en-IN")} (${monthsDue} महीने)\nसीट नंबर: ${s.seat}\nकृपया बकाया फीस जल्द जमा करें।\nधन्यवाद।\n\nउदय लाइब्रेरी`;
+  
+  window.open("https://wa.me/91" + s.mobile + "?text=" + encodeURIComponent(msg), "_blank");
 }
 
 function renderStats(){
